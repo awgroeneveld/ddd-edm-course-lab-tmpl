@@ -1,6 +1,7 @@
 package com.mattstine.dddworkshop.pizzashop.kitchen;
 
 import com.mattstine.dddworkshop.pizzashop.infrastructure.events.ports.EventLog;
+import com.mattstine.dddworkshop.pizzashop.infrastructure.events.ports.Topic;
 import com.mattstine.dddworkshop.pizzashop.infrastructure.repository.ports.Aggregate;
 import com.mattstine.dddworkshop.pizzashop.infrastructure.repository.ports.AggregateState;
 import lombok.Builder;
@@ -12,6 +13,7 @@ import java.util.function.BiFunction;
 
 @Value
 public final class Pizza implements Aggregate {
+    public static final String PIZZAS = "pizzas";
     PizzaRef ref;
     KitchenOrderRef kitchenOrderRef;
     Size size;
@@ -52,6 +54,7 @@ public final class Pizza implements Aggregate {
             throw new IllegalStateException("Cannot start prep on a Pizza that is not NEW");
         }
         state= State.PREPPING;
+        $eventLog.publish(new Topic(PIZZAS), new PizzaPrepStartedEvent(ref));
     }
 
     boolean isPrepping() {
@@ -62,6 +65,7 @@ public final class Pizza implements Aggregate {
         if(!isPrepping())
             throw new IllegalStateException("Cannot finish prep on a Pizza that is not PREPPING");
         state=State.PREPPED;
+        $eventLog.publish(new Topic(PIZZAS), new PizzaPrepFinishedEvent(ref));
     }
 
     boolean hasFinishedPrep() {
@@ -72,6 +76,7 @@ public final class Pizza implements Aggregate {
         if (!hasFinishedPrep())
             throw new IllegalStateException("Cannot start bake on a Pizza that is not PREPPED");
         state=State.BAKING;
+        $eventLog.publish(new Topic(PIZZAS), new PizzaBakeStartedEvent(ref));
     }
 
     boolean isBaking() {
@@ -82,6 +87,7 @@ public final class Pizza implements Aggregate {
         if (!isBaking())
             throw new IllegalStateException("Cannot finish bake on a Pizza that is not BAKING");
         this.state=State.BAKED;
+        $eventLog.publish(new Topic(PIZZAS), new PizzaBakeFinishedEvent(ref));
     }
 
     boolean hasFinishedBaking() {
