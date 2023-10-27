@@ -97,7 +97,11 @@ public final class KitchenOrder implements Aggregate {
 
     @Override
     public KitchenOrder identity() {
-        return null;
+        return KitchenOrder.builder()
+                .ref(KitchenOrderRef.IDENTITY)
+                .onlineOrderRef(OnlineOrderRef.IDENTITY)
+                .eventLog($eventLog.IDENTITY)
+                .build();
     }
 
     @Override
@@ -122,6 +126,30 @@ public final class KitchenOrder implements Aggregate {
 
         @Override
         public KitchenOrder apply(KitchenOrder kitchenOrder, KitchenOrderEvent kitchenOrderEvent) {
+            if (kitchenOrderEvent instanceof KitchenOrderAddedEvent){
+                return KitchenOrder.builder()
+                        .ref((KitchenOrderRef) kitchenOrderEvent.getRef())
+                        .onlineOrderRef(((KitchenOrderAddedEvent) kitchenOrderEvent).getState().getOnlineOrderRef())
+                        .pizzas(((KitchenOrderAddedEvent) kitchenOrderEvent).getState().getPizzas())
+                        .eventLog(kitchenOrder.$eventLog)
+                        .build();
+            }
+            if (kitchenOrderEvent instanceof KitchenOrderPrepStartedEvent){
+                kitchenOrder.state = State.PREPPING;
+                return kitchenOrder;
+            }
+            if (kitchenOrderEvent instanceof  KitchenOrderBakeStartedEvent){
+                kitchenOrder.state = State.BAKING;
+                return kitchenOrder;
+            }
+            if (kitchenOrderEvent instanceof  KitchenOrderAssemblyStartedEvent){
+                kitchenOrder.state = State.ASSEMBLING;
+                return kitchenOrder;
+            }
+            if (kitchenOrderEvent instanceof  KitchenOrderAssemblyFinishedEvent)        {
+                kitchenOrder.state = State.ASSEMBLED;
+                return kitchenOrder;
+            }
             return null;
         }
 

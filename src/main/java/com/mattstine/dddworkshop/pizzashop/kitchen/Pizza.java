@@ -96,7 +96,13 @@ public final class Pizza implements Aggregate {
 
     @Override
     public Pizza identity() {
-        return null;
+        return Pizza.builder()
+                .ref(PizzaRef.IDENTITY)
+                .size(Size.IDENTITY)
+                .kitchenOrderRef(KitchenOrderRef.IDENTITY)
+                .eventLog($eventLog.IDENTITY)
+                .build()
+                ;
     }
 
     @Override
@@ -130,6 +136,30 @@ public final class Pizza implements Aggregate {
 
         @Override
         public Pizza apply(Pizza pizza, PizzaEvent pizzaEvent) {
+            if (pizzaEvent instanceof PizzaAddedEvent){
+                return Pizza.builder()
+                        .ref(((PizzaAddedEvent) pizzaEvent).getState().getPizzaRef())
+                        .size(((PizzaAddedEvent) pizzaEvent).getState().getSize())
+                        .kitchenOrderRef(((PizzaAddedEvent) pizzaEvent).getState().getKitchenOrderRef())
+                        .eventLog(pizza.$eventLog)
+                        .build();
+            }
+            if (pizzaEvent instanceof PizzaPrepStartedEvent){
+                pizza.state=State.PREPPING;
+                return pizza;
+            }
+            if (pizzaEvent instanceof PizzaPrepFinishedEvent){
+                pizza.state=State.PREPPED;
+                return pizza;
+            }
+            if (pizzaEvent instanceof PizzaBakeStartedEvent){
+                pizza.state=State.BAKING;
+                return pizza;
+            }
+            if (pizzaEvent instanceof PizzaBakeFinishedEvent) {
+                pizza.state = State.BAKED;
+                return pizza;
+            }
             return null;
         }
     }
